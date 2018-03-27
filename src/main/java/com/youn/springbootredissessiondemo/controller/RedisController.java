@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpSession;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -85,6 +86,16 @@ public class RedisController {
     @GetMapping("/getUser")
     public Object getUser() {
         return null;
+    }
+
+    /**
+     * 共享session
+     *
+     * @param httpSession
+     */
+    @GetMapping("/sharedSessionTest")
+    public void sharedSessionTest(HttpSession httpSession) {
+        httpSession.setAttribute("token", "kkkkkkkkk");
     }
 
 }
