@@ -5,11 +5,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -83,7 +85,6 @@ public class RedisDataOperateController {
         this.redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(User.class));
         this.redisTemplate.setKeySerializer(new StringRedisSerializer());
         ListOperations listOperations = this.redisTemplate.opsForList();
-
         listOperations.rightPushAll("userList",
                 new User(100L, "name0"),
                 new User(101L, "name0"),
@@ -119,6 +120,5 @@ public class RedisDataOperateController {
         long count = opsForSet.size("set0");
         System.out.println(count);
     }
-
 
 }

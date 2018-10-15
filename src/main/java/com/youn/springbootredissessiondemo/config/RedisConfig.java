@@ -1,6 +1,8 @@
 package com.youn.springbootredissessiondemo.config;
 
-import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
@@ -46,7 +48,7 @@ public class RedisConfig extends CachingConfigurerSupport {
     }
 
     /**
-     * Object类型模板
+     * 此处的key最好不要用Object作为泛型，应该声明出实现类，比如String、Integer、Long等，Object值类型模板
      *
      * @param redisConnectionFactory
      * @return
@@ -54,12 +56,44 @@ public class RedisConfig extends CachingConfigurerSupport {
      */
     @Bean
     @ConditionalOnMissingBean
-    public RedisTemplate<Object, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) throws UnknownHostException {
-        RedisTemplate<Object, Object> redisTemplate = new RedisTemplate<>();
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
         redisTemplate.setKeySerializer(new StringRedisSerializer());  //指定key的序列化器
         redisTemplate.setValueSerializer(new GenericJackson2JsonRedisSerializer());  //指定value的序列化工具
         redisTemplate.setConnectionFactory(redisConnectionFactory);
         return redisTemplate;
+    }
+
+    /**
+     * 这是一个配置样例，供参考
+     *
+     * @param redisConnectionFactory
+     * @return
+     */
+//    @Bean
+    public RedisTemplate<String, Object> MyRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        //1.实例化序列化组件，此处用jackson
+        Jackson2JsonRedisSerializer<Object> jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer<>(Object.class);
+
+        //2.实例化Jackson的json映射器并配属性
+        ObjectMapper om = new ObjectMapper();
+        om.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        om.enableDefaultTyping(ObjectMapper.DefaultTyping.NON_FINAL);
+
+        //3.将json映射器配置给序列化组件
+        jackson2JsonRedisSerializer.setObjectMapper(om);
+
+        //4.实例化Redis模板，并为之配置连接工厂
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+
+        //5.给模板配置序列化组建
+        template.setKeySerializer(jackson2JsonRedisSerializer);
+        template.setValueSerializer(jackson2JsonRedisSerializer);
+        template.setHashKeySerializer(jackson2JsonRedisSerializer);
+        template.setHashValueSerializer(jackson2JsonRedisSerializer);
+        template.afterPropertiesSet();
+        return template;
     }
 
     /**
@@ -72,8 +106,6 @@ public class RedisConfig extends CachingConfigurerSupport {
     @Bean
     @ConditionalOnMissingBean
     public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) throws UnknownHostException {
-        StringRedisTemplate stringRedisTemplate = new StringRedisTemplate();
-        stringRedisTemplate.setConnectionFactory(redisConnectionFactory);
-        return stringRedisTemplate;
+        return new StringRedisTemplate(redisConnectionFactory);
     }
 }
